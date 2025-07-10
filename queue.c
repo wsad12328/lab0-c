@@ -7,15 +7,42 @@
 /* Create an empty queue */
 struct list_head *q_new()
 {
-    return NULL;
+    struct list_head *head = malloc(sizeof(struct list_head));
+    if (head) {
+        INIT_LIST_HEAD(head);
+    }
+    return head;
 }
 
 /* Free all storage used by queue */
-void q_free(struct list_head *head) {}
+void q_free(struct list_head *head)
+{
+    if (!head)
+        return;
+
+    struct list_head *node, *safe;
+    list_for_each_safe(node, safe, head) {
+        element_t *entry = list_entry(node, element_t, list);
+        q_release_element(entry);
+    }
+    free(head);
+}
 
 /* Insert an element at head of queue */
 bool q_insert_head(struct list_head *head, char *s)
 {
+    if (!head || !s)
+        return false;
+
+    element_t *new_element = malloc(sizeof(element_t));
+
+    if (!new_element)
+        return false;
+
+    new_element->value = strdup(s);
+    INIT_LIST_HEAD(&new_element->list);
+    list_add(&new_element->list, head);
+
     return true;
 }
 
@@ -28,8 +55,23 @@ bool q_insert_tail(struct list_head *head, char *s)
 /* Remove an element from head of queue */
 element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 {
-    return NULL;
+    if (!head || list_empty(head))
+        return NULL;
+
+    struct list_head *first = head->next;
+    element_t *entry = list_entry(first, element_t, list);
+
+    if (sp && bufsize > 0) {
+        strncpy(sp, entry->value, bufsize - 1);
+        sp[bufsize - 1] = '\0';
+    }
+
+    list_del_init(first);
+    list_del(first);
+
+    return entry;
 }
+
 
 /* Remove an element from tail of queue */
 element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
