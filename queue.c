@@ -203,15 +203,89 @@ bool q_delete_dup(struct list_head *head)
 void q_swap(struct list_head *head)
 {
     // https://leetcode.com/problems/swap-nodes-in-pairs/
+    if (!head || list_empty(head))
+        return;
+
+    struct list_head *curr = head->next;
+
+    while (curr != head && curr->next != head) {
+        struct list_head *next = curr->next;
+
+        next->prev = curr->prev;
+        curr->prev = next;
+
+        curr->next = next->next;
+        next->next = curr;
+        next->prev->next = next;
+        curr->next->prev = curr;
+        curr = curr->next;
+    }
 }
 
 /* Reverse elements in queue */
-void q_reverse(struct list_head *head) {}
+void q_reverse(struct list_head *head)
+{
+    if (!head || list_empty(head) || list_is_singular(head))
+        return;
+
+    struct list_head *curr = head;
+
+    do {
+        struct list_head *temp = curr->next;
+        curr->next = curr->prev;
+        curr->prev = temp;
+        curr = temp;
+    } while (curr != head);
+}
 
 /* Reverse the nodes of the list k at a time */
 void q_reverseK(struct list_head *head, int k)
 {
     // https://leetcode.com/problems/reverse-nodes-in-k-group/
+    if (!head || list_empty(head) || k <= 1)
+        return;
+
+    int total_nodes = q_size(head);
+    if (total_nodes < k)
+        return;
+
+    struct list_head *curr = head->next;
+
+    while (curr != head) {
+        // Check if we have k nodes remaining
+        int count = 0;
+        struct list_head *check = curr;
+        while (check != head) {
+            check = check->next;
+            count++;
+        }
+        if (count < k)
+            break;
+
+        struct list_head *group_start = curr;
+        struct list_head *group_end = curr;
+
+        for (int i = 0; i < k - 1; i++)
+            group_end = group_end->next;
+
+        struct list_head *reverse_curr = group_start;
+        struct list_head *prev_group = group_start->prev;
+        struct list_head *next_group = group_end->next;
+
+        for (int i = 0; i < k; i++) {
+            struct list_head *temp = reverse_curr->next;
+            curr->next = curr->prev;
+            curr->prev = temp;
+            curr = temp;
+        }
+
+        group_start->next = next_group;
+        prev_group->next = group_end;
+        group_end->prev = prev_group;
+        next_group->prev = group_start;
+
+        curr = next_group;
+    }
 }
 
 /* Sort elements of queue in ascending/descending order */
